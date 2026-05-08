@@ -134,7 +134,7 @@ module.exports = class PetController {
         static async removePetById(req, res){
             const id  = req.params.id
 
-            if (!moongoose.Types.ObjectId.isValid(id)) {
+            if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(422).json({ message: 'ID do pet inválido.'})
             }
 
