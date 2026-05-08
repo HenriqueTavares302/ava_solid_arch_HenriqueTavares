@@ -78,15 +78,35 @@ module.exports = class PetController {
         }
 
         static async getAllUserPets(req, res) {
-            res.status(200).json({ message: 'Em breve...'})
+            const token = getToken(req)
+            const user = await getUserByToken(token)
+
+            const pets = await Pet.find({ 'user._id' : user._id}).sort('-createdAt')
+
+            res.status(200).json({ 
+                success : true,
+                count : pets.length,
+                data : pets
+
+            })
         }
 
         static async getAllUserAdoptions(req, res) {
-            res.status(200).json({ message: 'Em breve...'})
+            const token = getToken(req)
+            const user = await getUserByToken(token)
+
+            const pets = await Pet.find({ 'adopter._id' : user._id }).sort('-createdAt')
+
+           res.status(200).json({ 
+                success: true,
+                count: pets.length,
+                data: pets
+           })
+            
         }
 
         static async getPetById(req, res) {
-            res.status(200).json({ message: 'Em breve...'})
+            res.status(200).json({ message: 'Em breve...' })
         }
 
         static async removePetById(req, res){
