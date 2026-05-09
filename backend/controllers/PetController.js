@@ -82,7 +82,7 @@ module.exports = class PetController {
             const token = getToken(req)
             const user = await getUserByToken(token)
 
-            const pets = await Pet.find({ 'user._id' : user._id}).sort('-createdAt')
+            const pets = await Pet.find({ 'user._id' : user._id.toString() }).sort('-createdAt')
 
             res.status(200).json({ 
                 success : true,
@@ -161,7 +161,45 @@ module.exports = class PetController {
         }
 
         static async updatePet(req, res){
-            res.status(200).json({ message: 'Em breve...'})
+            const { id } = req.params 
+            const { name, age, weight, color, available } = req.body
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(422).json({ message: 'ID do pet inválido.'})
+                
+            }
+
+                const pet = await Pet.findById(id)
+
+                if (!pet) {
+                    return res.status(404).json({ message: 'Pet não encontrado.'})
+                }
+
+                const token = getToken(req) 
+                const user = await getUserByToken(token)
+
+                if (pet.user._id.toString() !== user._id.toString()) {
+                    return res.status(403).json({ message: 'Acesso negado. Você não é o dono deste pet.'})
+                }
+
+              const updatedData = {}
+
+              if (name) updatedData.name = name
+              if (age) updatedData.age = age
+              if (weight) updatedData.weight = weight
+              if (color) updatedData.color = color
+              if (available !== undefined) updatedData.available = available
+
+              if (req.files && req.files.length > 0) {
+                updatedData.image = req.files.map((file) => file.filename)
+              }
+
+              const updatedPet = await Pet.findByIdAndUpdate(id, updatedData, { new: true })
+            
+              res.status(200).json({
+                message: 'Pet atualizado com sucesso.',
+                data: updatedPet
+              })
         }
 
         static async schedule(req, res){
