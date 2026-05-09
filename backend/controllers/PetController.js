@@ -203,11 +203,65 @@ module.exports = class PetController {
         }
 
         static async schedule(req, res){
-            res.status(200).json({ message: 'Em breve...'})
+            const { id } = req.params
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(422).json({ message: 'ID inválido.'})
+            }
+
+            const pet = await Pet.findById(id)
+
+            if (!pet) {
+                return res.status(404).json({ message: 'Pet não encontrado.'})
+            }
+
+            const token = getToken(req)
+            const user = await getUserByToken(token)
+
+            if (pet.user._id.toString() === user._id.toString()) {
+                return res.status(403).json({ messsage: 'Você não pode agendar uma visita para seu próprio pet.'})
+
+            }
+
+            pet.adopter = {
+                _id: user._id,
+                name: user.name,
+                image: user.image,
+                phone: user.phone,
+            }
+
+            await pet.save()
+
+            res.status(200).json({
+                message: 'Visita agendada com sucesso.'
+            })
+           
         }
 
         static async concludeAdoption(req, res){
-            res.status(200).json({ message: 'Em breve...'})
+            const { id } = req.params
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(422).json({ message: 'ID inválido.'})
+            }
+
+            const pet = await Pet.findById(id)
+
+            if  (!pet) {
+                return res.status(404).json({ message: 'Pet não encontrado.'})
+            }
+
+            const token = getToken(req)
+            const user = await getUserByToken(token)
+
+            if (pet.user._id.toString() !== user._id.toString()) {
+                return res.status(403).json({ message: 'Acesso negado. Você não é o dono deste pet.'})
+            }
+
+            await Pet.findByIdAndUpdate(id, { available: false})
+
+            res.status(200).json({ message: 'Adoção concluída com sucesso.'})
+            
         }
 
     }
